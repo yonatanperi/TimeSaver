@@ -9,22 +9,27 @@ class TimeSaver:
         self.shihva_ascii = ord(shihva)
 
     def save_my_time(self):
-        self.sort_file(self.gdud_path)
         splited_names = self.get_hanihim()
         reshumim = self.search_in_excel(splited_names)
-        self.sort_file("reshumim.txt")
         self.save_excel_file(reshumim)
 
     def get_hanihim(self):
+        global madrih
         f = open(self.gdud_path, "r", encoding='utf-8')
-        names = f.readlines()
+        lines = f.readlines()
         f.close()
 
-        splited_names = []
-        for name in names:
-            splited_name = name[:-1].split(" ", 1)
-            splited_name[0] = splited_name[0].replace("-", " ")
-            splited_names.append(splited_name)
+        splited_names = {}
+        for name in lines:
+            if name == "\n":
+                continue
+            if ":\n" in name:
+                madrih = name.replace(":\n", "")
+                splited_names[madrih] = []
+            else:
+                splited_name = name[:-1].split(" ", 1)
+                splited_name[0] = splited_name[0].replace("-", " ")
+                splited_names[madrih].append(splited_name)
         return splited_names
 
     def search_in_excel(self, splited_names, path="data.xlsx"):
@@ -33,12 +38,19 @@ class TimeSaver:
         index = 1
         reshumim = []
         while sheet[f"A{index}"].value:
-            current_name = [sheet[f"E{index}"].value, sheet[f"D{index}"].value, "מדריך תותח", "אין", "לא", "<-",
-                            sheet[f"R{index}"].value, "אין", sheet[f"F{index}"].value, sheet[f"S{index}"].value]
+            try:
+                parrant, phone_number = str(sheet[f"R{index}"].value).split("-")
+            except:
+                parrant = "לא נמצא"
+                phone_number = sheet[f"R{index}"].value
+            current_name = [sheet[f"E{index}"].value, sheet[f"D{index}"].value, "אין", "לא", parrant,
+                            phone_number, "אין", sheet[f"F{index}"].value, sheet[f"S{index}"].value]
 
-            if current_name[:2] in splited_names and \
-                    ord(sheet[f"K{index}"].value[0]) == self.shihva_ascii:
-                reshumim.append(current_name)
+            for m in splited_names.keys():
+                if current_name[:2] in splited_names[m] and \
+                        ord(sheet[f"K{index}"].value[0]) == self.shihva_ascii:
+                    current_name.insert(2, m)
+                    reshumim.append(current_name)
 
             index += 1
 
@@ -90,7 +102,7 @@ class TimeSaver:
 
 
 def main():
-    t = TimeSaver("leftovers.txt", "ד")
+    t = TimeSaver("gdud.txt", "ז")
     t.save_my_time()
 
 
